@@ -2,6 +2,7 @@ import {
   Badge,
   Card,
   Container,
+  Group,
   SimpleGrid,
   Stack,
   Text,
@@ -30,16 +31,22 @@ export default async function LoginPage() {
                 w="100%"
                 withBorder
               >
-                <Stack gap="xs">
-                  <Text fw={600} size="lg">
-                    {user.name}
-                  </Text>
+                <Stack gap={4}>
+                  <Group align="center" gap="sm" wrap="nowrap">
+                    <Text fw={600} size="lg">
+                      {user.name}
+                    </Text>
+                    <Badge
+                      color={ROLE_BADGE_COLORS[user.role]}
+                      size="md"
+                      variant="light"
+                    >
+                      {ROLE_LABELS[user.role]}
+                    </Badge>
+                  </Group>
                   <Text c="dimmed" size="sm">
                     {user.department}
                   </Text>
-                  <Badge color={ROLE_BADGE_COLORS[user.role]}>
-                    {ROLE_LABELS[user.role]}
-                  </Badge>
                 </Stack>
               </Card>
             </form>

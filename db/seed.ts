@@ -129,7 +129,7 @@ async function main(): Promise<void> {
     takahashiEmployee.id,
   ];
   const childCategoryIds = insertedChildCategories.map(
-    (childCategory) => childCategory.id
+    (childCategory) => childCategory.id,
   );
   const seededAt = Date.now();
   const past90DaysStart = new Date(seededAt - 90 * ONE_DAY_MS);
@@ -172,7 +172,7 @@ async function main(): Promise<void> {
           }),
         },
       },
-    })
+    }),
   );
 
   const insertedRequests = await db.select().from(purchaseRequests);
@@ -203,7 +203,7 @@ async function main(): Promise<void> {
     if (request.status === "approved" || request.status === "rejected") {
       const decisionDelayDays = 1 + Math.floor(Math.random() * 9);
       const decidedAt = new Date(
-        request.createdAt.getTime() + decisionDelayDays * ONE_DAY_MS
+        request.createdAt.getTime() + decisionDelayDays * ONE_DAY_MS,
       );
       historyValues.push({
         purchaseRequestId: request.id,
@@ -212,13 +212,13 @@ async function main(): Promise<void> {
         occurredAt: decidedAt,
         comment:
           request.status === "rejected"
-            ? randomFromArray(REJECTION_COMMENT_SAMPLES) ?? null
+            ? (randomFromArray(REJECTION_COMMENT_SAMPLES) ?? null)
             : null,
       });
     } else if (request.status === "withdrawn") {
       const withdrawDelayDays = 1 + Math.floor(Math.random() * 4);
       const withdrawnAt = new Date(
-        request.createdAt.getTime() + withdrawDelayDays * ONE_DAY_MS
+        request.createdAt.getTime() + withdrawDelayDays * ONE_DAY_MS,
       );
       historyValues.push({
         purchaseRequestId: request.id,

@@ -218,7 +218,7 @@ export async function deleteParentCategory(
 }
 
 function revalidatePaths(): void {
-  revalidatePath("/admin/categories");
+  revalidatePath("/admin/requests");
   revalidatePath("/requests/new");
 }
 

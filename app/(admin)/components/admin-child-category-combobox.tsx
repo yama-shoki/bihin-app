@@ -80,7 +80,10 @@ export function AdminChildCategoryCombobox({
     });
   };
 
-  const handleUpdate = (childId: ChildCategory["id"], name: string) => {
+  const handleUpdate = (
+    childId: ChildCategory["id"],
+    name: ChildCategory["name"],
+  ) => {
     startTransition(async () => {
       const result = await updateChildCategory({
         childCategoryId: childId,

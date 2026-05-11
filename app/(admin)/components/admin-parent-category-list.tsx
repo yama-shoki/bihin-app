@@ -36,7 +36,7 @@ export function AdminParentCategoryList({ categories }: Props) {
   const [isPending, startTransition] = useTransition();
   const [rowMode, setRowMode] = useState<RowMode>({ kind: "idle" });
 
-  const handleAdd = (name: string) => {
+  const handleAdd = (name: ParentCategory["name"]) => {
     startTransition(async () => {
       const result = await addParentCategory({ name });
       if (result.ok) {
@@ -49,7 +49,10 @@ export function AdminParentCategoryList({ categories }: Props) {
     });
   };
 
-  const handleUpdate = (parentId: ParentCategory["id"], name: string) => {
+  const handleUpdate = (
+    parentId: ParentCategory["id"],
+    name: ParentCategory["name"],
+  ) => {
     startTransition(async () => {
       const result = await updateParentCategory({
         parentCategoryId: parentId,

@@ -25,7 +25,7 @@
     "db:reset": "rm -f db/local/local.db db/local/local.db-* && npm run db:migrate && npm run db:seed"
   },
   "dependencies": {
-    "@gfazioli/mantine-onboarding-tour": "^4.0.0",
+    "@holiday-jp/holiday_jp": "^2.5.1",
     "@libsql/client": "^0.17.3",
     "@mantine/core": "^9.1.1",
     "@mantine/dates": "^9.1.1",
@@ -59,6 +59,7 @@
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "drizzle-kit": "^0.31.10",
+    "drizzle-seed": "^0.3.1",
     "happy-dom": "^20.9.0",
     "tsx": "^4.21.0",
     "typescript": "^5",

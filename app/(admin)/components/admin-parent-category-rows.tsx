@@ -67,9 +67,9 @@ export function ParentRow({
 }
 
 type ParentEditingRowProps = {
-  initialName: string;
+  initialName: ParentCategory["name"];
   isPending: boolean;
-  onSubmit: (name: string) => void;
+  onSubmit: (name: ParentCategory["name"]) => void;
   onCancel: () => void;
 };
 
@@ -137,7 +137,7 @@ export function ParentEditingRow({
 }
 
 type ParentConfirmingDeleteRowProps = {
-  parentName: string;
+  parentName: ParentCategory["name"];
   isPending: boolean;
   onConfirm: () => void;
   onCancel: () => void;

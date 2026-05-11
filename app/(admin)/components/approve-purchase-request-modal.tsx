@@ -15,8 +15,8 @@ type Props = {
   opened: boolean;
   onClose: () => void;
   purchaseRequestId: PurchaseRequest["id"];
-  title: string;
-  amountYen: number;
+  title: PurchaseRequest["title"];
+  amountYen: PurchaseRequest["amountYen"];
 };
 
 export function ApprovePurchaseRequestModal({

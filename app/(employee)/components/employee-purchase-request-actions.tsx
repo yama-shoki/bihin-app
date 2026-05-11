@@ -10,8 +10,8 @@ import { WithdrawPurchaseRequestModal } from "./withdraw-purchase-request-modal"
 
 type Props = {
   purchaseRequestId: PurchaseRequest["id"];
-  title: string;
-  amountYen: number;
+  title: PurchaseRequest["title"];
+  amountYen: PurchaseRequest["amountYen"];
 };
 
 export function EmployeePurchaseRequestActions({
