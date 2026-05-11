@@ -4,20 +4,17 @@ import { Badge, Button, Group } from "@mantine/core";
 import {
   PURCHASE_REQUEST_STATUS_BADGE_COLORS,
   PURCHASE_REQUEST_STATUS_LABELS,
+  type PurchaseRequestStatusFilterValue,
 } from "@/app/constants/purchase-request-status";
 import { PURCHASE_REQUEST_STATUSES } from "@/db/constants/purchase-request-status";
 
-export type StatusFilterValue =
-  | "all"
-  | (typeof PURCHASE_REQUEST_STATUSES)[number];
-
 type Props = {
-  value: StatusFilterValue;
-  onChange: (value: StatusFilterValue) => void;
-  counts: Record<StatusFilterValue, number>;
+  value: PurchaseRequestStatusFilterValue;
+  onChange: (value: PurchaseRequestStatusFilterValue) => void;
+  counts: Record<PurchaseRequestStatusFilterValue, number>;
 };
 
-const ALL_COLOR = "gray";
+const ALL_FILTER_COLOR = "gray";
 
 export function PurchaseRequestStatusFilter({
   value,
@@ -28,7 +25,7 @@ export function PurchaseRequestStatusFilter({
     <Group gap="xs" wrap="wrap">
       <FilterButton
         active={value === "all"}
-        color={ALL_COLOR}
+        color={ALL_FILTER_COLOR}
         count={counts.all}
         label="全て"
         onClick={() => onChange("all")}
@@ -66,22 +63,30 @@ function FilterButton({
   onClick,
   showCount,
 }: FilterButtonProps) {
+  const borderColor = active
+    ? `var(--mantine-color-${color}-6)`
+    : `var(--mantine-color-${color}-1)`;
+  const backgroundColor = active
+    ? `var(--mantine-color-${color}-2)`
+    : `var(--mantine-color-${color}-0)`;
+  const textColor = `var(--mantine-color-${color}-8)`;
+
   return (
     <Button
-      color={color}
       onClick={onClick}
+      radius="md"
       size="sm"
-      variant={active ? "filled" : "light"}
+      style={{
+        backgroundColor,
+        borderColor,
+        color: textColor,
+        fontWeight: active ? 700 : 600,
+      }}
+      variant="default"
     >
       {label}
       {showCount && (
-        <Badge
-          c={active ? color : undefined}
-          color={active ? "white" : color}
-          ml={6}
-          size="xs"
-          variant="filled"
-        >
+        <Badge color={color} ml={6} size="xs" variant="filled">
           {count}
         </Badge>
       )}
