@@ -1,3 +1,5 @@
+import { eq } from "drizzle-orm";
+import { seed } from "drizzle-seed";
 import { db } from "./index";
 import {
   approvalHistories,
@@ -6,54 +8,55 @@ import {
   purchaseRequests,
   users,
 } from "./schema";
-import type {
-  ApprovalHistoryInsert,
-  PurchaseRequestInsert,
-  PurchaseRequestStatus,
-} from "./types";
+import type { ApprovalHistoryInsert } from "./types";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const SEED_REQUEST_COUNT = 100;
+// 同じ seed 値で実行すると同じ分布を再現
+const RANDOM_SEED = 20260511;
 
-const daysAgo = (days: number, base: number = Date.now()): Date =>
-  new Date(base - days * DAY_MS);
+const REQUEST_TITLE_SAMPLES = [
+  "27インチ4Kモニター",
+  "メカニカルキーボード",
+  "ワイヤレスマウス",
+  "USB-Cハブ",
+  "ノートPCスタンド",
+  "ウェブカメラ",
+  "ヘッドセット",
+  "外付けSSD 1TB",
+  "外付けキーボードカバー",
+  "オフィスチェア交換",
+  "昇降式デスク",
+  "デスクライト",
+  "ホワイトボード",
+  "A4コピー用紙(500枚)",
+  "高機能ボールペン10本セット",
+  "シュレッダー",
+  "プロジェクター",
+  "GitHub Copilot Business",
+  "Figmaチーム年額プラン",
+  "Notionチームプラン",
+  "Slack Business+",
+  "1Password Teams",
+  "Linear Standard",
+  "Vercel Pro",
+  "Datadog Pro",
+  "技術書3冊セット",
+  "デザイン書籍",
+  "リファレンスマニュアル",
+  "ノイズキャンセリングイヤホン",
+  "モバイルバッテリー",
+];
 
-const daysFromNow = (days: number, base: number = Date.now()): Date =>
-  new Date(base + days * DAY_MS);
+const REJECTION_COMMENT_SAMPLES = [
+  "業務関連性が明確でないため、利用目的を再整理してから申請してください。",
+  "予算上限を超えているため、代替案の検討をお願いします。",
+  "同等機能の既存資産があるため、利用調整を先にお願いします。",
+  "他部署と共有可能か確認後、再申請してください。",
+];
 
-// * schema 由来の型でロック。status enum 追加 (例: "in_review") で seed もコンパイルエラーになる
-type PurchaseRequestSpec = Pick<
-  PurchaseRequestInsert,
-  | "applicantUserId"
-  | "title"
-  | "amountYen"
-  | "childCategoryId"
-  | "desiredPurchaseDate"
-> & {
-  status: PurchaseRequestStatus;
-  createdDaysAgo: number;
-};
-
-// * title 内のキーワードで却下理由を切り替えるテーブル (UI 確認用の現実味を担保)
-const REJECTION_RULES = [
-  {
-    pattern: "ゲーミング",
-    comment:
-      "個人利用との切り分けが困難なため、業務利用範囲を明確にしてから再申請してください。",
-  },
-  {
-    pattern: "高級",
-    comment:
-      "予算上限超過のため。代替案として通常価格帯のものをご検討ください。",
-  },
-] as const satisfies readonly { pattern: string; comment: string }[];
-
-const DEFAULT_REJECTION_COMMENT = "業務関連性が認められないため。";
-
-function rejectionComment(title: string): string {
-  return (
-    REJECTION_RULES.find((rule) => title.includes(rule.pattern))?.comment ??
-    DEFAULT_REJECTION_COMMENT
-  );
+function randomFromArray<T>(samples: readonly T[]): T | undefined {
+  return samples[Math.floor(Math.random() * samples.length)];
 }
 
 async function main(): Promise<void> {
@@ -65,7 +68,7 @@ async function main(): Promise<void> {
   await db.delete(parentCategories);
   await db.delete(users);
 
-  const [admin, emp1, emp2, emp3] = await db
+  const [adminUser, satoEmployee, suzukiEmployee, takahashiEmployee] = await db
     .insert(users)
     .values([
       { name: "山田 太郎", department: "総務部", role: "admin" },
@@ -75,11 +78,16 @@ async function main(): Promise<void> {
     ])
     .returning();
 
-  if (!admin || !emp1 || !emp2 || !emp3) {
+  if (!adminUser || !satoEmployee || !suzukiEmployee || !takahashiEmployee) {
     throw new Error("Failed to insert users");
   }
 
-  const [parentPc, parentOffice, parentSw, parentOther] = await db
+  const [
+    pcParentCategory,
+    officeParentCategory,
+    softwareParentCategory,
+    otherParentCategory,
+  ] = await db
     .insert(parentCategories)
     .values([
       { name: "PC周辺機器" },
@@ -89,236 +97,149 @@ async function main(): Promise<void> {
     ])
     .returning();
 
-  if (!parentPc || !parentOffice || !parentSw || !parentOther) {
+  if (
+    !pcParentCategory ||
+    !officeParentCategory ||
+    !softwareParentCategory ||
+    !otherParentCategory
+  ) {
     throw new Error("Failed to insert parent categories");
   }
 
-  const childCatRows = await db
+  const insertedChildCategories = await db
     .insert(childCategories)
     .values([
-      { parentCategoryId: parentPc.id, name: "モニター" },
-      { parentCategoryId: parentPc.id, name: "キーボード" },
-      { parentCategoryId: parentPc.id, name: "マウス" },
-      { parentCategoryId: parentOffice.id, name: "文房具" },
-      { parentCategoryId: parentOffice.id, name: "デスク" },
-      { parentCategoryId: parentOffice.id, name: "椅子" },
-      { parentCategoryId: parentSw.id, name: "開発ツール" },
-      { parentCategoryId: parentSw.id, name: "デザインツール" },
-      { parentCategoryId: parentSw.id, name: "SaaSサブスク" },
-      { parentCategoryId: parentOther.id, name: "書籍" },
-      { parentCategoryId: parentOther.id, name: "その他" },
+      { parentCategoryId: pcParentCategory.id, name: "モニター" },
+      { parentCategoryId: pcParentCategory.id, name: "キーボード" },
+      { parentCategoryId: pcParentCategory.id, name: "マウス" },
+      { parentCategoryId: officeParentCategory.id, name: "文房具" },
+      { parentCategoryId: officeParentCategory.id, name: "デスク" },
+      { parentCategoryId: officeParentCategory.id, name: "椅子" },
+      { parentCategoryId: softwareParentCategory.id, name: "開発ツール" },
+      { parentCategoryId: softwareParentCategory.id, name: "デザインツール" },
+      { parentCategoryId: softwareParentCategory.id, name: "SaaSサブスク" },
+      { parentCategoryId: otherParentCategory.id, name: "書籍" },
+      { parentCategoryId: otherParentCategory.id, name: "その他" },
     ])
     .returning();
 
-  const childCat = (index: number): string => {
-    const row = childCatRows[index];
-    if (!row) {
-      throw new Error(`child category ${index} missing`);
-    }
-    return row.id;
-  };
+  const employeeUserIds = [
+    satoEmployee.id,
+    suzukiEmployee.id,
+    takahashiEmployee.id,
+  ];
+  const childCategoryIds = insertedChildCategories.map(
+    (childCategory) => childCategory.id
+  );
+  const seededAt = Date.now();
+  const past90DaysStart = new Date(seededAt - 90 * ONE_DAY_MS);
 
-  // * createdDaysAgo は申請日昇順 (pending=新しい / approved=中間 / rejected=古い) で UI 確認しやすく配置
-  const specs = [
-    {
-      applicantUserId: emp1.id,
-      title: "27インチ4Kモニター",
-      amountYen: 65000,
-      childCategoryId: childCat(0),
-      desiredPurchaseDate: daysFromNow(7),
-      status: "pending",
-      createdDaysAgo: 1,
-    },
-    {
-      applicantUserId: emp2.id,
-      title: "メカニカルキーボード",
-      amountYen: 18000,
-      childCategoryId: childCat(1),
-      desiredPurchaseDate: null,
-      status: "pending",
-      createdDaysAgo: 2,
-    },
-    {
-      applicantUserId: emp3.id,
-      title: "Figmaチーム年額プラン",
-      amountYen: 180000,
-      childCategoryId: childCat(7),
-      desiredPurchaseDate: daysFromNow(14),
-      status: "pending",
-      createdDaysAgo: 3,
-    },
-    {
-      applicantUserId: emp1.id,
-      title: "リファクタリング(第2版)",
-      amountYen: 4400,
-      childCategoryId: childCat(9),
-      desiredPurchaseDate: null,
-      status: "pending",
-      createdDaysAgo: 4,
-    },
-    {
-      applicantUserId: emp2.id,
-      title: "ロジクール MX Master 3S",
-      amountYen: 14800,
-      childCategoryId: childCat(2),
-      desiredPurchaseDate: daysFromNow(3),
-      status: "pending",
-      createdDaysAgo: 5,
-    },
-    {
-      applicantUserId: emp1.id,
-      title: "ノートPC用スタンド",
-      amountYen: 7800,
-      childCategoryId: childCat(1),
-      desiredPurchaseDate: daysFromNow(5),
-      status: "approved",
-      createdDaysAgo: 10,
-    },
-    {
-      applicantUserId: emp2.id,
-      title: "ホワイトボード(壁掛け)",
-      amountYen: 12000,
-      childCategoryId: childCat(10),
-      desiredPurchaseDate: null,
-      status: "approved",
-      createdDaysAgo: 12,
-    },
-    {
-      applicantUserId: emp3.id,
-      title: "ボールペン詰め合わせ",
-      amountYen: 2400,
-      childCategoryId: childCat(3),
-      desiredPurchaseDate: null,
-      status: "approved",
-      createdDaysAgo: 14,
-    },
-    {
-      applicantUserId: emp1.id,
-      title: "JetBrains All Products Pack",
-      amountYen: 89000,
-      childCategoryId: childCat(6),
-      desiredPurchaseDate: null,
-      status: "approved",
-      createdDaysAgo: 16,
-    },
-    {
-      applicantUserId: emp2.id,
-      title: "GitHub Copilot Business",
-      amountYen: 24000,
-      childCategoryId: childCat(8),
-      desiredPurchaseDate: null,
-      status: "approved",
-      createdDaysAgo: 18,
-    },
-    {
-      applicantUserId: emp3.id,
-      title: "USB-Cハブ",
-      amountYen: 6800,
-      childCategoryId: childCat(0),
-      desiredPurchaseDate: null,
-      status: "approved",
-      createdDaysAgo: 20,
-    },
-    {
-      applicantUserId: emp1.id,
-      title: "オフィスチェア交換",
-      amountYen: 45000,
-      childCategoryId: childCat(5),
-      desiredPurchaseDate: null,
-      status: "approved",
-      createdDaysAgo: 22,
-    },
-    {
-      applicantUserId: emp2.id,
-      title: "ゲーミングPC",
-      amountYen: 350000,
-      childCategoryId: childCat(0),
-      desiredPurchaseDate: null,
-      status: "rejected",
-      createdDaysAgo: 24,
-    },
-    {
-      applicantUserId: emp3.id,
-      title: "高級デスク(木製)",
-      amountYen: 280000,
-      childCategoryId: childCat(4),
-      desiredPurchaseDate: null,
-      status: "rejected",
-      createdDaysAgo: 26,
-    },
-    {
-      applicantUserId: emp1.id,
-      title: "個人サブスク(動画配信)",
-      amountYen: 1980,
-      childCategoryId: childCat(8),
-      desiredPurchaseDate: null,
-      status: "rejected",
-      createdDaysAgo: 28,
-    },
-  ] as const satisfies readonly PurchaseRequestSpec[];
+  // @ts-expect-error -- drizzle-seed 0.3 の db 引数型が schema-less を要求するが実装は schema 付きでも動く
+  await seed(db, { purchaseRequests }, { seed: RANDOM_SEED }).refine(
+    (generators) => ({
+      purchaseRequests: {
+        count: SEED_REQUEST_COUNT,
+        columns: {
+          title: generators.valuesFromArray({ values: REQUEST_TITLE_SAMPLES }),
+          amountYen: generators.int({ minValue: 1000, maxValue: 250000 }),
+          applicantUserId: generators.valuesFromArray({
+            values: employeeUserIds,
+          }),
+          childCategoryId: generators.valuesFromArray({
+            values: childCategoryIds,
+          }),
+          status: generators.weightedRandom([
+            {
+              weight: 0.45,
+              value: generators.default({ defaultValue: "pending" }),
+            },
+            {
+              weight: 0.28,
+              value: generators.default({ defaultValue: "approved" }),
+            },
+            {
+              weight: 0.17,
+              value: generators.default({ defaultValue: "rejected" }),
+            },
+            {
+              weight: 0.1,
+              value: generators.default({ defaultValue: "withdrawn" }),
+            },
+          ]),
+          createdAt: generators.date({
+            minDate: past90DaysStart,
+            maxDate: new Date(seededAt),
+          }),
+        },
+      },
+    })
+  );
 
-  const requestValues: PurchaseRequestInsert[] = specs.map((spec) => {
-    const createdAt = daysAgo(spec.createdDaysAgo);
-    const updatedAt =
-      spec.status === "pending"
-        ? createdAt
-        : new Date(createdAt.getTime() + DAY_MS);
-    return {
-      applicantUserId: spec.applicantUserId,
-      title: spec.title,
-      amountYen: spec.amountYen,
-      childCategoryId: spec.childCategoryId,
-      desiredPurchaseDate: spec.desiredPurchaseDate,
-      status: spec.status,
-      createdAt,
-      updatedAt,
-    };
-  });
+  const insertedRequests = await db.select().from(purchaseRequests);
+  for (const [index, request] of insertedRequests.entries()) {
+    const applicantUserId =
+      employeeUserIds[index % employeeUserIds.length] ?? satoEmployee.id;
+    const desiredPurchaseDate =
+      index % 3 === 0
+        ? new Date(seededAt + Math.floor(Math.random() * 60 * ONE_DAY_MS))
+        : null;
+    await db
+      .update(purchaseRequests)
+      .set({ applicantUserId, desiredPurchaseDate })
+      .where(eq(purchaseRequests.id, request.id));
+  }
 
-  const insertedRequests = await db
-    .insert(purchaseRequests)
-    .values(requestValues)
-    .returning();
-
+  const finalRequests = await db.select().from(purchaseRequests);
   const historyValues: ApprovalHistoryInsert[] = [];
-  for (const req of insertedRequests) {
+  for (const request of finalRequests) {
     historyValues.push({
-      purchaseRequestId: req.id,
-      actorUserId: req.applicantUserId,
+      purchaseRequestId: request.id,
+      actorUserId: request.applicantUserId,
       kind: "created",
-      occurredAt: req.createdAt,
+      occurredAt: request.createdAt,
       comment: null,
     });
-    if (req.status === "approved") {
+
+    if (request.status === "approved" || request.status === "rejected") {
+      const decisionDelayDays = 1 + Math.floor(Math.random() * 9);
+      const decidedAt = new Date(
+        request.createdAt.getTime() + decisionDelayDays * ONE_DAY_MS
+      );
       historyValues.push({
-        purchaseRequestId: req.id,
-        actorUserId: admin.id,
-        kind: "approved",
-        occurredAt: req.updatedAt,
-        comment: null,
+        purchaseRequestId: request.id,
+        actorUserId: adminUser.id,
+        kind: request.status,
+        occurredAt: decidedAt,
+        comment:
+          request.status === "rejected"
+            ? randomFromArray(REJECTION_COMMENT_SAMPLES) ?? null
+            : null,
       });
-    } else if (req.status === "rejected") {
+    } else if (request.status === "withdrawn") {
+      const withdrawDelayDays = 1 + Math.floor(Math.random() * 4);
+      const withdrawnAt = new Date(
+        request.createdAt.getTime() + withdrawDelayDays * ONE_DAY_MS
+      );
       historyValues.push({
-        purchaseRequestId: req.id,
-        actorUserId: admin.id,
-        kind: "rejected",
-        occurredAt: req.updatedAt,
-        comment: rejectionComment(req.title),
+        purchaseRequestId: request.id,
+        actorUserId: request.applicantUserId,
+        kind: "withdrawn",
+        occurredAt: withdrawnAt,
+        comment: null,
       });
     }
   }
-
   await db.insert(approvalHistories).values(historyValues);
 
   console.log(`  users:               4`);
   console.log(`  parent_categories:   4`);
-  console.log(`  child_categories:    ${childCatRows.length}`);
-  console.log(`  purchase_requests:   ${insertedRequests.length}`);
+  console.log(`  child_categories:    ${insertedChildCategories.length}`);
+  console.log(`  purchase_requests:   ${finalRequests.length}`);
   console.log(`  approval_histories:  ${historyValues.length}`);
   console.log("Done.");
 }
 
-main().catch((err) => {
-  console.error(err);
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });

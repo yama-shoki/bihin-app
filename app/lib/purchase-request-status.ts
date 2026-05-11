@@ -4,5 +4,8 @@ export function canTransitionPurchaseRequestStatus(
   current: PurchaseRequestStatus,
   next: PurchaseRequestStatus,
 ): boolean {
-  return current === "pending" && (next === "approved" || next === "rejected");
+  if (current !== "pending") {
+    return false;
+  }
+  return next === "approved" || next === "rejected" || next === "withdrawn";
 }

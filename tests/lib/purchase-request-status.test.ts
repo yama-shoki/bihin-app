@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { canTransitionPurchaseRequestStatus } from "@/app/lib/purchase-request-status";
 import { PURCHASE_REQUEST_STATUSES } from "@/db/constants/purchase-request-status";
 
-const ALLOWED = new Set<string>(["pending->approved", "pending->rejected"]);
+const ALLOWED = new Set<string>([
+  "pending->approved",
+  "pending->rejected",
+  "pending->withdrawn",
+]);
 
 describe("canTransitionPurchaseRequestStatus", () => {
   for (const current of PURCHASE_REQUEST_STATUSES) {
