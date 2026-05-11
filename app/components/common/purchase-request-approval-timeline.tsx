@@ -1,13 +1,14 @@
-import { type MantineColor, Stack, Text, Timeline } from "@mantine/core";
-import { APPROVAL_HISTORY_KIND_LABELS } from "@/app/constants/approval-history-kind";
+"use client";
+
+import { Stack, Text, Timeline } from "@mantine/core";
+import { IconClock } from "@tabler/icons-react";
+import {
+  APPROVAL_HISTORY_KIND_COLORS,
+  APPROVAL_HISTORY_KIND_ICONS,
+  APPROVAL_HISTORY_KIND_LABELS,
+} from "@/app/constants/approval-history-kind";
 import { formatDateTime } from "@/app/lib/format";
 import type { ApprovalHistory, PurchaseRequestStatus, User } from "@/db/types";
-
-const KIND_BULLET_COLORS = {
-  created: "gray",
-  approved: "blue",
-  rejected: "red",
-} satisfies Record<ApprovalHistory["kind"], MantineColor>;
 
 type Props = {
   status: PurchaseRequestStatus;
@@ -26,7 +27,8 @@ export function PurchaseRequestApprovalTimeline({ status, histories }: Props) {
     <Timeline active={active} bulletSize={24} lineWidth={2}>
       {histories.map((history) => (
         <Timeline.Item
-          color={KIND_BULLET_COLORS[history.kind]}
+          bullet={<HistoryBulletIcon kind={history.kind} />}
+          color={APPROVAL_HISTORY_KIND_COLORS[history.kind]}
           key={history.id}
           title={APPROVAL_HISTORY_KIND_LABELS[history.kind]}
         >
@@ -44,8 +46,21 @@ export function PurchaseRequestApprovalTimeline({ status, histories }: Props) {
         </Timeline.Item>
       ))}
       {status === "pending" ? (
-        <Timeline.Item color="yellow" title="承認待ち" />
+        <Timeline.Item
+          bullet={<IconClock size={14} stroke={2.4} />}
+          color="yellow"
+          title="承認待ち"
+        />
       ) : null}
     </Timeline>
   );
+}
+
+type HistoryBulletIconProps = {
+  kind: ApprovalHistory["kind"];
+};
+
+function HistoryBulletIcon({ kind }: HistoryBulletIconProps) {
+  const Icon = APPROVAL_HISTORY_KIND_ICONS[kind];
+  return <Icon size={14} stroke={2.4} />;
 }
