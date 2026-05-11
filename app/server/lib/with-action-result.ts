@@ -1,6 +1,6 @@
+import { BusinessError, ValidationError } from "@/app/lib/errors";
 import "server-only";
 import { ZodError } from "zod";
-import { BusinessError, ValidationError } from "@/app/lib/errors";
 import { type ActionResult, err } from "./action-result";
 
 /**
@@ -14,6 +14,7 @@ export async function withActionResult<T>(
 ): Promise<ActionResult<T>> {
   try {
     const data = await fn();
+
     return { ok: true, data };
   } catch (caught) {
     if (caught instanceof ValidationError) {
