@@ -5,6 +5,7 @@ import { DataTable, type DataTableSortStatus } from "mantine-datatable";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { PurchaseRequestStatusBadge } from "@/app/components/common/purchase-request-status-badge";
+import { PURCHASE_REQUEST_PAGE_SIZE } from "@/app/constants/pagination";
 import { formatDate, formatYen } from "@/app/lib/format";
 import type { PurchaseRequestListItem } from "@/app/server/data/purchase-requests";
 
@@ -18,8 +19,6 @@ type Props = {
   onPageChange: (page: number) => void;
 };
 
-const PAGE_SIZE = 10;
-
 export function EmployeePurchaseRequestTable({
   requests,
   sortStatus,
@@ -28,13 +27,21 @@ export function EmployeePurchaseRequestTable({
   onPageChange,
 }: Props) {
   const router = useRouter();
-  const goTo = (id: PurchaseRequestListItem["id"]) =>
-    router.push(`/requests/${id}` as Route);
+  const navigateToDetail = (purchaseRequestId: PurchaseRequestListItem["id"]) =>
+    router.push(`/requests/${purchaseRequestId}` as Route);
+
+  // mantine-datatable は records を自動 slice しないので、ここで page-aware に切り出す。
+  const paginatedRequests = requests.slice(
+    (page - 1) * PURCHASE_REQUEST_PAGE_SIZE,
+    page * PURCHASE_REQUEST_PAGE_SIZE,
+  );
+  const isMultiPage = requests.length > PURCHASE_REQUEST_PAGE_SIZE;
 
   return (
     <>
       <Box visibleFrom="sm">
         <DataTable
+          highlightOnHover
           columns={[
             {
               accessor: "createdAt",
@@ -53,6 +60,8 @@ export function EmployeePurchaseRequestTable({
               accessor: "amountYen",
               title: "金額",
               sortable: true,
+              textAlign: "right",
+              titleStyle: { textAlign: "right" },
               render: (record) => formatYen(record.amountYen),
             },
             {
@@ -68,14 +77,14 @@ export function EmployeePurchaseRequestTable({
           minHeight={300}
           noRecordsText="該当する申請はありません"
           onPageChange={onPageChange}
-          onRowClick={({ record }) => goTo(record.id)}
+          onRowClick={({ record }) => navigateToDetail(record.id)}
           onSortStatusChange={onSortStatusChange}
           page={page}
           paginationText={({ from, to, totalRecords }) =>
             `${from}〜${to} / ${totalRecords}件`
           }
-          records={requests}
-          recordsPerPage={PAGE_SIZE}
+          records={paginatedRequests}
+          recordsPerPage={PURCHASE_REQUEST_PAGE_SIZE}
           rowStyle={(_record, index) => ({
             cursor: "pointer",
             backgroundColor:
@@ -89,28 +98,29 @@ export function EmployeePurchaseRequestTable({
             },
             table: {
               "& tbody tr": {
-                transition: "background-color 120ms ease",
+                transition: "background-color 200ms ease",
               },
               "& tbody tr:hover": {
                 backgroundColor: "var(--mantine-color-indigo-0)",
               },
             },
+            pagination: isMultiPage ? undefined : { display: "none" },
           }}
           totalRecords={requests.length}
           withTableBorder
         />
       </Box>
       <Stack gap="sm" hiddenFrom="sm">
-        {requests.length === 0 ? (
+        {paginatedRequests.length === 0 ? (
           <Text c="dimmed" py="xl" ta="center">
             該当する申請はありません
           </Text>
         ) : (
-          requests.map((request) => (
+          paginatedRequests.map((request) => (
             <Card
               component="button"
               key={request.id}
-              onClick={() => goTo(request.id)}
+              onClick={() => navigateToDetail(request.id)}
               padding="md"
               style={{ cursor: "pointer", textAlign: "left" }}
               type="button"

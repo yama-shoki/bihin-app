@@ -1,0 +1,1 @@
+export const PURCHASE_REQUEST_PAGE_SIZE = 30;
