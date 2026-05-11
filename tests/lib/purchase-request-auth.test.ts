@@ -3,11 +3,11 @@ import {
   canReviewPurchaseRequest,
   canViewPurchaseRequest,
 } from "@/app/lib/auth";
-import type { UserRow } from "@/db/types";
+import type { User, UserRole } from "@/db/types";
 
 vi.mock("server-only", () => ({}));
 
-function user(id: string, role: "admin" | "employee"): UserRow {
+function user(id: User["id"], role: UserRole): User {
   return {
     id,
     name: "テスト",

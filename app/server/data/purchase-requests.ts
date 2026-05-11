@@ -12,28 +12,28 @@ import { childCategories, parentCategories } from "@/db/schema/categories";
 import { purchaseRequests } from "@/db/schema/purchase-requests";
 import { users } from "@/db/schema/users";
 import type {
-  ApprovalHistoryRow,
-  ChildCategoryRow,
-  ParentCategoryRow,
-  PurchaseRequestRow,
-  UserRow,
+  ApprovalHistory,
+  ChildCategory,
+  ParentCategory,
+  PurchaseRequest,
+  User,
 } from "@/db/types";
 import "server-only";
 
 export type PurchaseRequestListItem = Pick<
-  PurchaseRequestRow,
+  PurchaseRequest,
   "id" | "title" | "amountYen" | "desiredPurchaseDate" | "status" | "createdAt"
 > & {
-  applicant: Pick<UserRow, "id" | "name" | "department">;
-  parentCategory: Pick<ParentCategoryRow, "id" | "name">;
-  childCategory: Pick<ChildCategoryRow, "id" | "name">;
+  applicant: Pick<User, "id" | "name" | "department">;
+  parentCategory: Pick<ParentCategory, "id" | "name">;
+  childCategory: Pick<ChildCategory, "id" | "name">;
 };
 
 export type ApprovalHistoryItem = Pick<
-  ApprovalHistoryRow,
+  ApprovalHistory,
   "id" | "kind" | "occurredAt" | "comment"
 > & {
-  actor: Pick<UserRow, "id" | "name">;
+  actor: Pick<User, "id" | "name">;
 };
 
 export async function getMyPurchaseRequests(): Promise<
@@ -53,7 +53,7 @@ export async function getAllPurchaseRequests(): Promise<
 }
 
 export const getPurchaseRequestById = cache(
-  async (id: PurchaseRequestRow["id"]): Promise<PurchaseRequestListItem> => {
+  async (id: PurchaseRequest["id"]): Promise<PurchaseRequestListItem> => {
     const { user } = await requireSession();
     const [row] = await queryPurchaseRequestList(eq(purchaseRequests.id, id));
 
@@ -69,7 +69,7 @@ export const getPurchaseRequestById = cache(
 );
 
 export async function listApprovalHistoriesForPurchaseRequest(
-  purchaseRequestId: PurchaseRequestRow["id"],
+  purchaseRequestId: PurchaseRequest["id"],
 ): Promise<ApprovalHistoryItem[]> {
   // 履歴の可視性は親リソースの可視性に従う。
   await getPurchaseRequestById(purchaseRequestId);

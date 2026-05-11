@@ -4,11 +4,11 @@ import { cache } from "react";
 import { requireSession } from "@/app/lib/auth";
 import { db } from "@/db";
 import { childCategories, parentCategories } from "@/db/schema/categories";
-import type { ChildCategoryRow, ParentCategoryRow } from "@/db/types";
+import type { ChildCategory, ParentCategory } from "@/db/types";
 
 export type CategoryGroup = {
-  parent: ParentCategoryRow;
-  children: ChildCategoryRow[];
+  parent: ParentCategory;
+  children: ChildCategory[];
 };
 
 export const listCategories = cache(async (): Promise<CategoryGroup[]> => {
