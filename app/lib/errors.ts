@@ -1,5 +1,3 @@
-import { forbidden, notFound } from "next/navigation";
-
 export abstract class BusinessError extends Error {
   abstract readonly kind: "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "VALIDATION";
 
@@ -32,14 +30,4 @@ export class ValidationError extends BusinessError {
     super(message, options);
     this.fieldErrors = options?.fieldErrors;
   }
-}
-
-/**
- * Server Component / Route Handler で BusinessError を Next.js のページエラーに変換する。
- * Forbidden → forbidden() / NotFound → notFound() / それ以外は再 throw して error.tsx に流す。
- */
-export function dispatchPageError(error: unknown): never {
-  if (error instanceof ForbiddenError) forbidden();
-  if (error instanceof NotFoundError) notFound();
-  throw error;
 }

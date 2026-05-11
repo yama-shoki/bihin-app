@@ -1,11 +1,11 @@
 import { asc, desc, eq, type SQL } from "drizzle-orm";
+import { forbidden, notFound } from "next/navigation";
 import { cache } from "react";
 import {
   canViewPurchaseRequest,
   requireRole,
   requireSession,
 } from "@/app/lib/auth";
-import { ForbiddenError, NotFoundError } from "@/app/lib/errors";
 import { db } from "@/db";
 import { approvalHistories } from "@/db/schema/approval-histories";
 import { childCategories, parentCategories } from "@/db/schema/categories";
@@ -58,10 +58,10 @@ export const getPurchaseRequestById = cache(
     const [row] = await queryPurchaseRequestList(eq(purchaseRequests.id, id));
 
     if (!row) {
-      throw new NotFoundError("申請が見つかりません");
+      notFound();
     }
     if (!canViewPurchaseRequest(user, row.applicant.id)) {
-      throw new ForbiddenError("この申請を閲覧する権限がありません");
+      forbidden();
     }
 
     return row;
