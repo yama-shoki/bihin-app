@@ -2,6 +2,19 @@
 
 Repository や Aggregate のような重い抽象は入れず、認可・状態遷移・楽観ロックといった「実装で効くポイント」を Server Action と schema と tests に直接書いています。コードを薄く保つことで、設計判断がそのまま読めることを意図しました。
 
+## 技術スタックと選定理由
+
+| 採用 | 用途と選定理由 |
+|---|---|
+| Next.js 16 (App Router) + React 19 | レンダリング方式や Server Action の挙動を理解しており、フルスタックアプリの構築で最も手早く形にできる構成だと判断したためです |
+| Mantine 9 + mantine-datatable v8 | UI コンポーネントの種類が豊富かつ API が扱いやすく、業務アプリケーションに向いた UI 表現が揃っていると判断したためです |
+| nuqs v2 | フィルタ・ソート・検索・ページネーションを `useQueryStates` 1 個で URL 同期でき、`useState` が増えがちな一覧画面の状態管理を 1 か所にまとめられるためです |
+| Drizzle ORM + libSQL (SQLite ファイル) | 外部サービス不要・`.env` 不要で、`npm run setup` 1 発でセットアップから起動まで到達できるためです |
+| `@holiday-jp/holiday_jp` | 日付入力で祝日強調を行う最小依存のために採用しました |
+| Biome / Vitest 4 / Playwright | lint・format を 1 ツールに集約し、テストは unit / schema / component / E2E の 4 段で必要分だけ書くためです |
+
+ライトモード固定 (`forceColorScheme="light"`)。時刻は `dayjs.tz.setDefault("Asia/Tokyo")` を経由するため、実行環境の TZ に依存しません。
+
 ## 薄い 3 層
 
 | 層 | 場所 | 役割 |
@@ -79,20 +92,31 @@ RETURNING id;
 
 `tests/actions/approve-twice.test.ts` で in-memory DB に対して実 SQL を流して挙動を検証しています (mock しない)。
 
-## Server↔Client 境界で踏んだ罠
+## 妥協した点・もっと時間があればやりたかったこと
 
-Mantine + Next.js 16 + React 19 で出会った落とし穴のメモ。
+### ドメイン層を独立させたクリーンアーキテクチャの導入
 
-| 罠 | 対処 |
-|---|---|
-| Mantine の compound component を含むラッパーを Server で書く → server bundle で `Element type is invalid` | ラッパーに `"use client"` を付ける |
-| Modal Form で HTML5 `required` を使う → ブラウザの validation が submit を止めて Mantine `useForm.validate` が走らない | `withAsterisk` (見た目だけ) に置き換える |
-| Server から Client に関数 props を渡す → serialize 不可エラー | `ReactNode` で受ける / Context 経由 |
-| Mantine polymorphic `component={Link}` を Server で渡す | `<Link><Button component="span">...</Button></Link>` で外側 Link、内側 Button が span |
+本アプリでは「純粋関数 (`app/lib/`) / 読み込み (`app/server/data/`) / 書き込み (`app/server/actions/`)」の薄い 3 層に留めました。本格的な業務システムであれば Domain (Entity / Value Object / Domain Service) / UseCase / Repository / Infrastructure に分割し、Server Action はユースケースの呼び出しに徹する形にしたいです。`PurchaseRequest` を集約として扱い、状態遷移や認可をエンティティのメソッドに閉じ込めれば、ビジネスルールがより目に見える形になります。今回はコードの薄さで設計判断を表現することを優先したため、その手前で止めました。
+
+### コンポーネント内ロジックのカスタムフックへの切り出し
+
+`PurchaseRequestForm` の submit ハンドラや、admin 側のカテゴリ CRUD コンポーネントには「Server Action 呼び出し → 結果分岐 → 通知 → `router.refresh()`」というパターンが集まっています。実装途中で `useSubmitPurchaseRequest` / `useChildCategoryCRUD` / `useParentCategoryCRUD` として hooks に切り出すリファクタを試しましたが、「同じ hook が 1 か所からしか呼ばれない = 再利用性ゼロ」「component 内で読めば全部わかる colocated logic の方が読み手に優しい」というトレードオフを優先して破棄しました。再利用箇所が増えるか、テスト対象として独立させたい局面が来たら hook 化する方向に切り替える想定です。
+
+### 多段階承認 / 金額閾値による承認ルート分岐 / 添付ファイル / 申請理由テキスト / 購入希望商品のリンク
+
+業務システムとしては自然な拡張ですが、状態遷移と認可が一段複雑になるため今回は採用していません。多段階承認は `approval_histories` を「次の承認者を誰にするか」の駆動データとして使う設計に発展させたかったところです。購入希望商品の URL を持たせれば、承認者が実際の商品ページを確認しながら判断できるようになります。
+
+### オブザーバビリティ (構造化ログ + エラー追跡)
+
+`pino` で構造化ログを出して `correlation ID` を Server Action 呼び出し単位で発行し、Sentry / OpenTelemetry で本番のクライアントエラー・サーバエラー・トレースを収集したいです。今回は `withActionResult` 内の `console.error` で最小限のログだけ出しています。
+
+### コンポーネントテストの網羅 / E2E シナリオの追加
+
+UI 深掘りの代表として `StatusBadge` の smoke 1 本と E2E 2 本 (承認パス / 却下パス) で間接的に担保していますが、編集・取り下げ・カテゴリ CRUD のシナリオも E2E に加えたかったです。状態遷移・認可・楽観ロックは unit でカバー済みなので回帰の検出はできますが、ブラウザ越しの動線確認には及びません。
 
 ## 作業時間の内訳
 
-合計 **約 5 時間** (休憩除く)。最初のコミットが 2026-05-11 17:12、最後が翌 00:25 で経過 7 時間 13 分ですが、20:19〜23:25 の 3 時間は晩飯・中断で抜けています。
+合計 **約 5 時間** (休憩除く)。最初のコミットが 2026-05-11 17:12、最後が翌 00:25 で経過 7 時間 13 分ですが、20:19〜23:25 の 3 時間は食事・中断で抜けています。
 
 | フェーズ | 内容 | 目安 |
 |---|---|---|

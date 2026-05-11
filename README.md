@@ -86,16 +86,7 @@ clone してすぐ触れるよう、cookie を保存するだけの dummy login 
 
 ## 技術スタック
 
-| 採用 | 用途 |
-|---|---|
-| Next.js 16 (App Router) + React 19 | Server Action と RSC で書き込み・読み込みを型付きでつなぐ |
-| Mantine 9 + mantine-datatable v8 | Form / Modal / Timeline / Combobox を一貫した API で |
-| nuqs v2 | フィルタ・ソート・検索・ページネーションを URL と同期 |
-| Drizzle ORM + libSQL (SQLite ファイル) | 外部サービス不要、`npm run setup` だけで再現できる |
-| `@holiday-jp/holiday_jp` | 日付入力で土日祝を赤くする |
-| Biome / Vitest 4 / Playwright | lint・format を 1 ツール / unit・schema・component・E2E の 4 段テスト |
-
-ライトモード固定 (`forceColorScheme="light"`)。時刻は `dayjs.tz.setDefault("Asia/Tokyo")` で実行環境の TZ に依存しません。
+Next.js 16 (App Router) + React 19 / Mantine 9 / Drizzle ORM + libSQL (SQLite ファイル) / TypeScript / Biome / Vitest 4 / Playwright。選定理由の詳細は [`docs/architecture.md#技術スタックと選定理由`](./docs/architecture.md#技術スタックと選定理由) をご覧ください。
 
 ## 機能
 
@@ -114,25 +105,14 @@ clone してすぐ触れるよう、cookie を保存するだけの dummy login 
 
 ## 深掘りした領域: UI/UX
 
-業務で使うアプリとして「**迷わずパッと操作できる**」を目指しました。具体例と実装は [`docs/ui-ux.md`](./docs/ui-ux.md) をご覧ください。軸は 6 つです:
+業務で使うアプリとして「**迷わずパッと操作できる**」ことを最優先に、6 つの軸で踏み込みました。あわせて、UI 表現 (ラベル・色・アイコン) は `db/constants/` の literal tuple から型レベルで派生させており、`enum` を 1 つ追加すると関連箇所が tsc で炙り出される SSoT 構造で UI 全体の一貫性を担保しています。
 
-1. **判断材料とアクションを同じ視野に置く** — 詳細画面で金額・申請者・希望購入日と、承認/却下ボタンを 1 つのカードに集約しています
-2. **異常なときだけ目立たせる** — 希望購入日が過ぎている申請中だけ赤バッジ。普段はただの日付として表示します
-3. **一覧の状態を URL に同期する** — フィルタ・ソート・ページ・検索の状態が URL に乗るので、リロード・共有・戻るボタンに耐えます
-4. **2 人の管理者が同時に承認しても壊れない** — UI 側の二重送信防止とサーバ側の楽観ロックを組み合わせ、後勝ちした側には「他の管理者が処理済」を通知して画面を最新に揃えます
-5. **新しい子カテゴリをその場で追加できる** — 検索結果が空のときに「『○○』を追加」option を出します。親未選択時は無効、空文字は拒否、重複は通知、失敗時は入力を維持、の 4 ガード付きです
-6. **管理者のカテゴリ管理は Notion 風** — サイドバーから modal を開き、行内で inline 編集・inline 削除確認まで完結します
+詳細は [`docs/ui-ux.md`](./docs/ui-ux.md) をご覧ください。
 
-## 妥協した点・もっと時間があればやりたかったこと
+## 妥協した点 / 作業時間
 
-- **多段階承認 / 金額閾値による承認ルート分岐 / 添付ファイル / 申請理由テキスト** は採用しませんでした。主軸の UI/UX と認可・状態遷移に集中したかったためです
-- **構造化ログ (pino + correlation ID)** は本番運用では導入したいですが、プロトタイプの主張に直結しないため省略しました
-- **コンポーネントテストの網羅** は行わず、StatusBadge の smoke 1 本と E2E 2 本で間接的に担保しました
-- **E2E に編集・取り下げ・カテゴリ CRUD のシナリオ** も追加したかったところです。状態遷移・認可・楽観ロックは unit でカバー済みです
-
-## 作業時間
-
-合計 **約 5 時間** (休憩除く)。最初と最後のコミット時刻は 7 時間離れていますが、20:19〜23:25 の 3 時間は晩飯と中断で抜けています。フェーズ別の内訳は [`docs/architecture.md#作業時間の内訳`](./docs/architecture.md#作業時間の内訳)。
+- 妥協した点ともう少し時間があればやりたかったこと: [`docs/architecture.md#妥協した点もっと時間があればやりたかったこと`](./docs/architecture.md#妥協した点もっと時間があればやりたかったこと)
+- 合計 **約 5 時間** (休憩除く)。フェーズ別の内訳: [`docs/architecture.md#作業時間の内訳`](./docs/architecture.md#作業時間の内訳)
 
 ## ディレクトリ構成
 

@@ -4,18 +4,7 @@
 
 ## 1. 判断材料とアクションを同じ視野に置く
 
-申請詳細では、金額・申請者・希望購入日と「承認」「却下」ボタンを 1 つのカードに収めて、視線の往復をなくしています。
-
-```
-┌─ 申請内容 ────────────────────[Badge: 申請中]┐
-│ タイトル / 金額 / 申請者 / カテゴリ / 希望購入日 │
-│ ───────────────────────────────────────────── │
-│             [却下する] [承認する]   ← 同一視野  │
-└───────────────────────────────────────────────┘
-┌─ 承認履歴 (Timeline) ─────────────────────────┐
-│ ● 申請  → ○ 承認待ち / 承認 / 却下 / 取り下げ │
-└───────────────────────────────────────────────┘
-```
+申請詳細では、金額・申請者・希望購入日と「承認」「却下」ボタンを 1 つのカードに収めて視線の往復をなくしています。承認履歴は別カードで Timeline 表示。
 
 employee 視点でも admin 視点でも同じ構造で、`PurchaseRequestDetail` の `actions` slot に渡す中身だけが違います (employee = 編集/取り下げ、admin = 承認/却下)。
 
@@ -104,9 +93,21 @@ getDayProps={(date) => {
 
 業務日の調整に直結する小さな配慮です。
 
-## 10. SSoT 駆動の UI 用語・色
+## 10. UI の一貫性を型レベルの SSoT で支える
 
-`db/constants/` の literal tuple → `app/constants/` で `LABELS` / `BADGE_COLORS` / `ICONS` を 1 箇所に集約 → Badge / Filter / Detail / Timeline / Form すべて同じ語彙を参照します。enum を 1 つ足すと連動箇所が全部 type error で炙り出される構造です。
+ラベル・色・アイコンといった UI 表現を `db/constants/` の literal tuple から **派生** させています。
+
+```
+db/constants/   (literal tuple、唯一の真実)
+  ├─ db/schema/      Drizzle table enum
+  ├─ db/zod/         createInsertSchema → pick で派生
+  ├─ db/types/       $inferSelect / $inferInsert
+  └─ app/constants/  LABELS / BADGE_COLORS / ICONS
+        ↓
+   Badge / Filter / Detail / Timeline / Form すべて参照
+```
+
+例えば `PURCHASE_REQUEST_STATUSES` に `withdrawn` を追加した時、ラベル・色・アイコン・Filter の集計・zod の許容値・Server 側 schema、これら全部の不足を tsc が同時に検出しました。一貫性を「コードレビューで気をつける」ではなく「型システムで強制する」状態にしているのが、UI 上で揺れない用語・色・アイコンを保つ土台です。
 
 ## 11. コンポーネント分割の方針
 
