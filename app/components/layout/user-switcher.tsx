@@ -5,10 +5,10 @@ import { ROLE_LABELS } from "@/app/constants/role";
 import { loginAs, logout } from "@/app/server/actions/auth";
 import type { User } from "@/db/types";
 
-interface Props {
+type Props = {
   currentUser: Pick<User, "id" | "name" | "department" | "role">;
   candidates: Pick<User, "id" | "name" | "department" | "role">[];
-}
+};
 
 export function UserSwitcher({ currentUser, candidates }: Props) {
   return (
