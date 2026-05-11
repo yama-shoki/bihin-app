@@ -110,7 +110,9 @@ Next.js 16 (App Router) + React 19 / Mantine 9 / Drizzle ORM + libSQL (SQLite �
 | 申請の承認・却下 (申請中のみ) | — | ✓ |
 | カテゴリ管理 (親/子の追加・編集・削除) | — | ✓ |
 
-ステータスは `申請中 → 承認済 / 却下 / 取り下げ` の 3 経路のみで、確定したら戻りません。**管理者は申請を作れません** (責務分離、`canEdit` / `canWithdraw` を `employee` 専用にしている → 詳細は [`docs/architecture.md#認可-3-段で守る`](./docs/architecture.md#認可-3-段で守る))。
+ステータスは `申請中 → 承認済 / 却下 / 取り下げ` の 3 経路のみで、確定したら戻りません。**管理者は申請を作れません** (責務分離、`canEdit` / `canWithdraw` を `employee` 専用にしている → 詳細は [`docs/architecture.md#認可は-3-段で守る`](./docs/architecture.md#認可は-3-段で守る))。
+
+データ項目は課題の最低要件 5 項目 (タイトル / 金額 / 申請日 / ステータス / 申請者) を満たした上で、業務利用を想定して **カテゴリ (2 階層) / 希望購入日 / 承認履歴 (誰がいつ承認・却下したか) / 楽観ロック用バージョン** を追加しています。ER 図とテーブル定義は [`docs/data-model.md`](./docs/data-model.md) を参照してください。
 
 ## 深掘りした領域: UI/UX
 
