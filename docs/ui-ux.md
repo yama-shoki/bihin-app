@@ -109,7 +109,21 @@ db/constants/   (literal tuple、唯一の真実)
 
 例えば `PURCHASE_REQUEST_STATUSES` に `withdrawn` を追加した時、ラベル・色・アイコン・Filter の集計・zod の許容値・Server 側 schema、これら全部の不足を tsc が同時に検出しました。一貫性を「コードレビューで気をつける」ではなく「型システムで強制する」状態にしているのが、UI 上で揺れない用語・色・アイコンを保つ土台です。
 
-## 11. コンポーネント分割の方針
+## 11. ページ遷移を柔らかく見せる fade-in
+
+ページ遷移時に内容が「パッ」と切り替わると、目線が追いつかずに体験が硬く感じます。`<FadeIn>` コンポーネントで `transform: translateY(4px) → 0` と `opacity: 0 → 1` を `0.45s ease-out` で当てて、各ページの本体が下から軽く立ち上がる挙動にしました。
+
+```css
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fade-in 0.45s ease-out; }
+```
+
+最初は Mantine の `Transition` + `useState` + `useEffect` で「マウント検出 → mounted=true」と書いていましたが、これだと初回描画が 2 パスになって不可視→可視の瞬間が見えてしまいます。CSS animation に置き換えて `"use client"` も不要な純 RSC で動かしています (useEffect ゼロ)。
+
+## 12. コンポーネント分割の方針
 
 | 種類 | 場所 |
 |---|---|

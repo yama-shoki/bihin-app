@@ -102,6 +102,23 @@ flowchart LR
 
 enum を 1 つ足すと、型・zod・UI ラベル・色・アイコンの全部に tsc が反応します。
 
+## インデックス設計
+
+申請一覧の検索・フィルタ・ソート・並び替えを意識して、`purchase_requests` には 4 つのインデックスを貼っています。
+
+| テーブル | インデックス | 用途 |
+|---|---|---|
+| `purchase_requests` | `applicant_idx` (`applicant_user_id`) | 一般社員の自分の申請一覧 |
+| `purchase_requests` | `status_idx` (`status`) | ステータスタブの絞り込み、`UPDATE WHERE status='pending'` の楽観ロック |
+| `purchase_requests` | `created_at_idx` (`created_at`) | 申請日でのソート (デフォルト) |
+| `purchase_requests` | `child_category_idx` (`child_category_id`) | カテゴリフィルタ + 親カテゴリ削除時の参照チェック |
+| `approval_histories` | `purchase_request_idx` (`purchase_request_id`) | 詳細画面で 1 つの申請の履歴をまとめて取得 |
+| `approval_histories` | `occurred_at_idx` (`occurred_at`) | Timeline 表示の時系列ソート |
+| `child_categories` | `child_categories_parent_name_unq` (`parent_category_id`, `name`) UNIQUE | 同じ親の下に同じ名前の子カテゴリを許さない |
+| `child_categories` | `child_categories_parent_idx` (`parent_category_id`) | 親で子を絞り込む |
+
+`users` には貼っていません。100 名規模の社内ツールを想定し、ユーザー数の伸びがインデックスを必要とするほどにはならないためです。
+
 ## Seed の中身
 
 `npm run setup` で投入される量:

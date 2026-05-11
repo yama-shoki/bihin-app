@@ -2,6 +2,17 @@
 
 Repository や Aggregate のような重い抽象は入れず、認可・状態遷移・楽観ロックといった「実装で効くポイント」を Server Action と schema と tests に直接書いています。コードを薄く保つことで、設計判断がそのまま読めることを意図しました。
 
+## 再現性を最優先にしたセットアップ設計
+
+「clone した人が誰でもすぐ動かせる」を最優先に置きました。具体的には:
+
+- **Docker / docker-compose 不要** — コンテナランタイムが入っていない PC でも動くように、DB は SQLite ファイル (`db/local/local.db`) をローカルに自動生成する構成にしました
+- **外部サービス不要** — Supabase / Firebase / PostgreSQL サーバ / Redis などへの接続は一切ありません。アカウント作成や認証情報のセットアップが要らないので、課題の文脈で誰がいつ clone しても同じ状態から始められます
+- **`.env` 不要** — `DATABASE_URL` を含め、起動に必要な環境変数はゼロです (`db/local/local.db` をフォールバック先にしているため)
+- **1 コマンドで DB 投入** — `npm run setup` だけで「DB ファイル削除 → migrate → seed」が走り、申請 100 件 + 履歴を含む状態で起動できます
+
+結果として、`git clone` → `npm install` → `npm run setup` → `npm run dev` の **3 コマンド**で動作確認まで到達できます。`「git clone → READMEの手順通りにセットアップ → 動く」が成立しない場合は減点` という採点基準を踏まえて、本番運用での選択肢 (PostgreSQL 等) よりも、まず動くことを優先しました。本番運用に乗せる際は `DATABASE_URL` を libSQL 互換のホスト (Turso 等) に向けるだけで切り替えられる前提です。
+
 ## 技術スタックと選定理由
 
 | 採用 | 用途と選定理由 |
@@ -67,6 +78,31 @@ canReviewPurchaseRequest(viewer)                // admin だけ
 
 承認者は申請内容を編集・取り下げできません。「承認する側が自分で申請して自分で承認する」状況を helper レベルで防いでいます。
 
+## Server Component と Client Component の境界
+
+App Router のデフォルトは Server Component で、`"use client"` を付けたファイルだけが Client Component になります。本アプリでは 28 ファイルに `"use client"` を付けていて、それ以外 (page / layout / data 層 / 静的なコンポーネント) は Server で動きます。
+
+| 区分 | 役割 | 例 |
+|---|---|---|
+| Server (デフォルト) | データ取得・認可・初期描画 | `(employee)/requests/page.tsx` / `app/server/data/*` / `PurchaseRequestDetail` (静的部分) |
+| Client (`"use client"`) | フォーム / Modal / インタラクション / nuqs / Mantine の interactive UI | `purchase-request-form.tsx` / `*-modal.tsx` / `*-sidebar.tsx` / `app-shell-layout.tsx` |
+
+判断基準は「ユーザー操作で state が変わるか / browser API が必要か」です。例えば `PurchaseRequestDetail` はデータ表示だけなので Server、`AdminPurchaseRequestActions` は Modal の開閉 state を持つので Client です。
+
+Server から Client に props を渡すときは関数やクラスインスタンスをそのまま渡せない (serialize 不可) ので、`AppShellLayout` のように Context 経由でハンドラを届けています。
+
+## `cache()` で同一リクエスト内の重複呼び出しを排除
+
+データ取得関数を `React.cache()` でラップしているので、同じリクエスト内で何度呼んでも DB ヒットは 1 回です。
+
+```ts
+export const getPurchaseRequestById = cache(async (id) => { ... });
+export const getSession = cache(async () => { ... });
+export const listCategories = cache(async () => { ... });
+```
+
+例えば `getSession` は `proxy.ts` 配下の middleware / `requireRole` / data 層の認可で何度も呼ばれますが、cache のおかげで実 DB アクセスは 1 リクエストにつき 1 回です。`listApprovalHistoriesForPurchaseRequest` の内部で `getPurchaseRequestById` を呼んで親リソースの可視性を継承するパターンも、cache が効くため重複アクセスは起きません。
+
 ## エラーの流し方
 
 | 経路 | 動き |
@@ -97,6 +133,10 @@ RETURNING id;
 ### ドメイン層を独立させたクリーンアーキテクチャの導入
 
 本アプリでは「純粋関数 (`app/lib/`) / 読み込み (`app/server/data/`) / 書き込み (`app/server/actions/`)」の薄い 3 層に留めました。本格的な業務システムであれば Domain (Entity / Value Object / Domain Service) / UseCase / Repository / Infrastructure に分割し、Server Action はユースケースの呼び出しに徹する形にしたいです。`PurchaseRequest` を集約として扱い、状態遷移や認可をエンティティのメソッドに閉じ込めれば、ビジネスルールがより目に見える形になります。今回はコードの薄さで設計判断を表現することを優先したため、その手前で止めました。
+
+### Suspense + loading.tsx による段階的描画
+
+Next.js の `<Suspense>` と `loading.tsx` でデータ取得中の skeleton を出す構成も検討しましたが、本アプリは local の SQLite ファイルを直接読むため、データ取得が体感ゼロ秒で完了します。`Suspense` を入れると skeleton が一瞬出てすぐ消える「ポップコーン UI」になり、むしろ UX が落ちると判断したため、今回は採用していません。代わりにページ全体に `<FadeIn>` を当てて、コンテンツが滑らかに立ち上がる挙動でつなげています。本番で外部 DB やネットワーク越しの API を使う構成になった時に、データ単位の `Suspense` + skeleton に切り替える想定です。
 
 ### コンポーネント内ロジックのカスタムフックへの切り出し
 
