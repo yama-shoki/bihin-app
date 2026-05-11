@@ -17,7 +17,6 @@ import { useForm } from "@mantine/form";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import type { z } from "zod";
 import {
   showErrorNotification,
@@ -69,7 +68,6 @@ type Props = CreateProps | EditProps;
 
 export function PurchaseRequestForm(props: Props) {
   const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
   const isEdit = props.mode === "edit";
   const detailHref = isEdit
     ? (`/requests/${props.purchaseRequestId}` as Route)
@@ -107,26 +105,25 @@ export function PurchaseRequestForm(props: Props) {
     if (typeof values.amountYen !== "number") {
       return;
     }
-    // Mantine DateInput は YYYY-MM-DD の string を返す。schema は Date を要求するので変換。
+    // * Mantine DateInput は YYYY-MM-DD の string を返す。schema は Date を要求するので変換。
     const desiredPurchaseDate = values.desiredPurchaseDate
       ? new Date(values.desiredPurchaseDate)
       : null;
-    setSubmitting(true);
+    const amountYen = values.amountYen;
     const result = isEdit
       ? await updatePurchaseRequest({
           purchaseRequestId: props.purchaseRequestId,
           title: values.title.trim(),
-          amountYen: values.amountYen,
+          amountYen,
           childCategoryId: values.childCategoryId,
           desiredPurchaseDate,
         })
       : await createPurchaseRequest({
           title: values.title.trim(),
-          amountYen: values.amountYen,
+          amountYen,
           childCategoryId: values.childCategoryId,
           desiredPurchaseDate,
         });
-    setSubmitting(false);
 
     if (result.ok) {
       showSuccessNotification(
@@ -137,7 +134,6 @@ export function PurchaseRequestForm(props: Props) {
       return;
     }
 
-    // 編集中に他の管理者が処理 → 詳細に戻して最新状態を再取得
     if (isEdit && result.error.kind === "CONFLICT") {
       showErrorNotification(result.error.message);
       router.push(detailHref);
@@ -145,18 +141,14 @@ export function PurchaseRequestForm(props: Props) {
       return;
     }
 
-    // zod 派生の field errors を Mantine form に反映
     if (result.error.kind === "VALIDATION" && result.error.fieldErrors) {
-      const formErrors: Record<string, string> = {};
-      for (const [field, messages] of Object.entries(
-        result.error.fieldErrors,
-      )) {
-        const first = messages[0];
-        if (first) {
-          formErrors[field] = first;
-        }
-      }
-      form.setErrors(formErrors);
+      form.setErrors(
+        Object.fromEntries(
+          Object.entries(result.error.fieldErrors)
+            .map(([field, messages]) => [field, messages[0]])
+            .filter(([, message]) => Boolean(message)),
+        ),
+      );
     }
 
     showErrorNotification(result.error.message);
@@ -176,7 +168,7 @@ export function PurchaseRequestForm(props: Props) {
             <Divider />
             <TextInput
               description="100文字以内で記入"
-              disabled={submitting}
+              disabled={form.submitting}
               label="タイトル"
               placeholder="例: 27インチ4Kモニター"
               withAsterisk
@@ -184,7 +176,7 @@ export function PurchaseRequestForm(props: Props) {
             />
             <NumberInput
               description="税込価格を入力"
-              disabled={submitting}
+              disabled={form.submitting}
               hideControls
               label="金額(円)"
               min={1}
@@ -211,7 +203,7 @@ export function PurchaseRequestForm(props: Props) {
                 label: group.parent.name,
                 value: group.parent.id,
               }))}
-              disabled={submitting}
+              disabled={form.submitting}
               label="親カテゴリ"
               onChange={(value) => {
                 form.setFieldValue("parentCategoryId", value);
@@ -224,7 +216,7 @@ export function PurchaseRequestForm(props: Props) {
             />
             <ChildCategoryCombobox
               categories={props.categories}
-              disabled={submitting}
+              disabled={form.submitting}
               error={form.errors.childCategoryId}
               onChange={(value) => form.setFieldValue("childCategoryId", value)}
               parentCategoryId={form.values.parentCategoryId}
@@ -245,17 +237,16 @@ export function PurchaseRequestForm(props: Props) {
             <DateInput
               clearable
               description="任意。指定があれば入力してください"
-              disabled={submitting}
+              disabled={form.submitting}
               getDayProps={(date) => {
-                const d = typeof date === "string" ? new Date(date) : date;
-                if (isJapaneseHoliday(d)) {
-                  const name = getJapaneseHolidayName(d);
-                  return {
-                    style: { color: "var(--mantine-color-red-6)" },
-                    title: name,
-                  };
+                const d = new Date(date);
+                if (!isJapaneseHoliday(d)) {
+                  return {};
                 }
-                return {};
+                return {
+                  style: { color: "var(--mantine-color-red-6)" },
+                  title: getJapaneseHolidayName(d) ?? undefined,
+                };
               }}
               label="希望購入日"
               placeholder="日付を選択"
@@ -268,13 +259,17 @@ export function PurchaseRequestForm(props: Props) {
         <Group gap="sm" justify="flex-end">
           <Button
             component={Link}
-            disabled={submitting}
+            disabled={form.submitting}
             href={detailHref}
             variant="default"
           >
             キャンセル
           </Button>
-          <Button disabled={submitting} loading={submitting} type="submit">
+          <Button
+            disabled={form.submitting}
+            loading={form.submitting}
+            type="submit"
+          >
             {isEdit ? "更新する" : "申請する"}
           </Button>
         </Group>

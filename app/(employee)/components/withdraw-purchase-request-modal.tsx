@@ -2,7 +2,7 @@
 
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useTransition } from "react";
 import {
   showErrorNotification,
   showSuccessNotification,
@@ -27,42 +27,42 @@ export function WithdrawPurchaseRequestModal({
   amountYen,
 }: Props) {
   const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleClose = () => {
-    if (submitting) {
+    if (isPending) {
       return;
     }
     onClose();
   };
 
-  const handleWithdraw = async () => {
-    setSubmitting(true);
-    const result = await withdrawPurchaseRequest({ purchaseRequestId });
-    setSubmitting(false);
+  const handleWithdraw = () => {
+    startTransition(async () => {
+      const result = await withdrawPurchaseRequest({ purchaseRequestId });
 
-    if (result.ok) {
-      showSuccessNotification("申請を取り下げました");
-      onClose();
-      router.refresh();
-      return;
-    }
+      if (result.ok) {
+        showSuccessNotification("申請を取り下げました");
+        onClose();
+        router.refresh();
+        return;
+      }
 
-    if (result.error.kind === "CONFLICT") {
-      showErrorNotification("既に管理者が処理したため取り下げできません");
-      onClose();
-      router.refresh();
-      return;
-    }
+      if (result.error.kind === "CONFLICT") {
+        showErrorNotification("既に管理者が処理したため取り下げできません");
+        onClose();
+        router.refresh();
+        return;
+      }
 
-    showErrorNotification(result.error.message);
+      showErrorNotification(result.error.message);
+    });
   };
 
   return (
     <Modal
       centered
-      closeOnClickOutside={!submitting}
-      closeOnEscape={!submitting}
+      closeOnClickOutside={!isPending}
+      closeOnEscape={!isPending}
       onClose={handleClose}
       opened={opened}
       title="申請の取り下げ"
@@ -77,7 +77,7 @@ export function WithdrawPurchaseRequestModal({
         </Stack>
         <Group gap="sm" justify="flex-end">
           <Button
-            disabled={submitting}
+            disabled={isPending}
             onClick={handleClose}
             type="button"
             variant="default"
@@ -86,8 +86,8 @@ export function WithdrawPurchaseRequestModal({
           </Button>
           <Button
             color="gray"
-            disabled={submitting}
-            loading={submitting}
+            disabled={isPending}
+            loading={isPending}
             onClick={handleWithdraw}
             type="button"
           >
