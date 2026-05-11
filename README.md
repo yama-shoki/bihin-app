@@ -121,7 +121,7 @@ Next.js 16 (App Router) + React 19 / Mantine 9 / Drizzle ORM + libSQL (SQLite �
 ## 妥協した点 / 作業時間
 
 - 妥協した点ともう少し時間があればやりたかったこと: [`docs/architecture.md#妥協した点もっと時間があればやりたかったこと`](./docs/architecture.md#妥協した点もっと時間があればやりたかったこと)
-- 合計 **約 5 時間** (休憩除く)。フェーズ別の内訳: [`docs/architecture.md#作業時間の内訳`](./docs/architecture.md#作業時間の内訳)
+- 合計 **約 5 時間半** (休憩除く)。フェーズ別の内訳: [`docs/architecture.md#作業時間の内訳`](./docs/architecture.md#作業時間の内訳)
 
 ## ディレクトリ構成
 
