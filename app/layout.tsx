@@ -1,9 +1,12 @@
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import {
   ColorSchemeScript,
   MantineProvider,
   mantineHtmlProps,
 } from "@mantine/core";
+import { ModalsProvider } from "@mantine/modals";
+import { Notifications } from "@mantine/notifications";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -22,7 +25,12 @@ export default function RootLayout({
         <ColorSchemeScript forceColorScheme="light" />
       </head>
       <body>
-        <MantineProvider forceColorScheme="light">{children}</MantineProvider>
+        <MantineProvider forceColorScheme="light">
+          <ModalsProvider>
+            <Notifications />
+            {children}
+          </ModalsProvider>
+        </MantineProvider>
       </body>
     </html>
   );
