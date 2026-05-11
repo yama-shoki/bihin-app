@@ -1,5 +1,5 @@
-import "server-only";
 import { asc, desc, eq, type SQL } from "drizzle-orm";
+import { cache } from "react";
 import {
   canViewPurchaseRequest,
   requireRole,
@@ -7,35 +7,33 @@ import {
 } from "@/app/lib/auth";
 import { ForbiddenError, NotFoundError } from "@/app/lib/errors";
 import { db } from "@/db";
-import {
-  type ApprovalHistoryKind,
-  approvalHistories,
-} from "@/db/schema/approval-histories";
+import { approvalHistories } from "@/db/schema/approval-histories";
 import { childCategories, parentCategories } from "@/db/schema/categories";
-import {
-  type PurchaseRequestStatus,
-  purchaseRequests,
-} from "@/db/schema/purchase-requests";
+import { purchaseRequests } from "@/db/schema/purchase-requests";
 import { users } from "@/db/schema/users";
+import type {
+  ApprovalHistoryRow,
+  ChildCategoryRow,
+  ParentCategoryRow,
+  PurchaseRequestRow,
+  UserRow,
+} from "@/db/types";
+import "server-only";
 
-export type PurchaseRequestListItem = {
-  id: string;
-  title: string;
-  amountYen: number;
-  desiredPurchaseDate: Date | null;
-  status: PurchaseRequestStatus;
-  createdAt: Date;
-  applicant: { id: string; name: string; department: string };
-  parentCategory: { id: string; name: string };
-  childCategory: { id: string; name: string };
+export type PurchaseRequestListItem = Pick<
+  PurchaseRequestRow,
+  "id" | "title" | "amountYen" | "desiredPurchaseDate" | "status" | "createdAt"
+> & {
+  applicant: Pick<UserRow, "id" | "name" | "department">;
+  parentCategory: Pick<ParentCategoryRow, "id" | "name">;
+  childCategory: Pick<ChildCategoryRow, "id" | "name">;
 };
 
-export type ApprovalHistoryItem = {
-  id: string;
-  kind: ApprovalHistoryKind;
-  occurredAt: Date;
-  comment: string | null;
-  actor: { id: string; name: string };
+export type ApprovalHistoryItem = Pick<
+  ApprovalHistoryRow,
+  "id" | "kind" | "occurredAt" | "comment"
+> & {
+  actor: Pick<UserRow, "id" | "name">;
 };
 
 export async function getMyPurchaseRequests(): Promise<
@@ -54,24 +52,24 @@ export async function getAllPurchaseRequests(): Promise<
   return queryPurchaseRequestList();
 }
 
-export async function getPurchaseRequestById(
-  id: string,
-): Promise<PurchaseRequestListItem> {
-  const { user } = await requireSession();
-  const [row] = await queryPurchaseRequestList(eq(purchaseRequests.id, id));
+export const getPurchaseRequestById = cache(
+  async (id: PurchaseRequestRow["id"]): Promise<PurchaseRequestListItem> => {
+    const { user } = await requireSession();
+    const [row] = await queryPurchaseRequestList(eq(purchaseRequests.id, id));
 
-  if (!row) {
-    throw new NotFoundError("申請が見つかりません");
-  }
-  if (!canViewPurchaseRequest(user, row.applicant.id)) {
-    throw new ForbiddenError("この申請を閲覧する権限がありません");
-  }
+    if (!row) {
+      throw new NotFoundError("申請が見つかりません");
+    }
+    if (!canViewPurchaseRequest(user, row.applicant.id)) {
+      throw new ForbiddenError("この申請を閲覧する権限がありません");
+    }
 
-  return row;
-}
+    return row;
+  },
+);
 
 export async function listApprovalHistoriesForPurchaseRequest(
-  purchaseRequestId: string,
+  purchaseRequestId: PurchaseRequestRow["id"],
 ): Promise<ApprovalHistoryItem[]> {
   // 履歴の可視性は親リソースの可視性に従う。
   await getPurchaseRequestById(purchaseRequestId);

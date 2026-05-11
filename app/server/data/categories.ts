@@ -1,5 +1,6 @@
 import "server-only";
 import { asc } from "drizzle-orm";
+import { cache } from "react";
 import { requireSession } from "@/app/lib/auth";
 import { db } from "@/db";
 import { childCategories, parentCategories } from "@/db/schema/categories";
@@ -10,7 +11,7 @@ export type CategoryGroup = {
   children: ChildCategoryRow[];
 };
 
-export async function listCategories(): Promise<CategoryGroup[]> {
+export const listCategories = cache(async (): Promise<CategoryGroup[]> => {
   await requireSession();
 
   const parents = await db
@@ -27,4 +28,4 @@ export async function listCategories(): Promise<CategoryGroup[]> {
     parent,
     children: children.filter((child) => child.parentCategoryId === parent.id),
   }));
-}
+});
