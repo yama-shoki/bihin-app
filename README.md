@@ -62,14 +62,13 @@ npm run dev      # http://localhost:3000
 
 ブラウザで開いたら、下のデモユーザー表からどれかをクリックしてログインしてください。
 
-### スクリプト一覧
+### 7. DB を視覚的に確認したいとき (任意)
 
-| コマンド | 何をするか |
-|---|---|
-| `npm run dev` | 開発サーバ |
-| `npm run setup` | DB リセット + migrate + seed |
-| `npm run check` | biome + tsc + vitest を一括実行 |
-| `npm run test:e2e` | Playwright (初回だけ `npx playwright install` が必要) |
+```bash
+npm run db:studio
+```
+
+Drizzle Studio が起動し、ブラウザで `https://local.drizzle.studio` を開くとテーブルの中身を直接見たり、レコードを書き換えたりできます。動作確認中に「seed の中身を眺めたい」「ステータスを手動で変えたい」といった用途に便利です。
 
 ### デモユーザー
 
@@ -83,6 +82,16 @@ npm run dev      # http://localhost:3000
 | 高橋 美咲 | デザイン部 | 一般社員 |
 
 clone してすぐ触れるよう、cookie を保存するだけの dummy login にしてあります。本番なら Better Auth / Supabase Auth / Clerk などに差し替える前提です。
+
+### スクリプト一覧
+
+| コマンド | 何をするか |
+|---|---|
+| `npm run dev` | 開発サーバ |
+| `npm run setup` | DB リセット + migrate + seed |
+| `npm run db:studio` | Drizzle Studio で DB をブラウザから閲覧・編集 |
+| `npm run check` | biome + tsc + vitest を一括実行 |
+| `npm run test:e2e` | Playwright (初回だけ `npx playwright install` が必要) |
 
 ## 技術スタック
 
