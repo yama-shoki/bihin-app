@@ -129,13 +129,6 @@ export function AdminPurchaseRequestTable({
               onClick={() => navigateToDetail(request.id)}
               padding="md"
               style={{
-                borderLeftColor:
-                  request.status === "pending"
-                    ? "var(--mantine-color-orange-6)"
-                    : undefined,
-                borderLeftStyle:
-                  request.status === "pending" ? "solid" : undefined,
-                borderLeftWidth: request.status === "pending" ? 4 : undefined,
                 cursor: "pointer",
                 textAlign: "left",
               }}
