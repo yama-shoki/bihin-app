@@ -27,7 +27,7 @@ export class ValidationError extends BusinessError {
 
   constructor(
     message: string,
-    options?: { cause?: unknown; fieldErrors?: Record<string, string[]> }
+    options?: { cause?: unknown; fieldErrors?: Record<string, string[]> },
   ) {
     super(message, options);
     this.fieldErrors = options?.fieldErrors;
