@@ -1,0 +1,12 @@
+.row {
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.row:nth-child(even) {
+  background-color: var(--mantine-color-gray-1);
+}
+
+.row:hover {
+  background-color: var(--mantine-color-indigo-1);
+}

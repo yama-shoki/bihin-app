@@ -5,6 +5,7 @@ import { DataTable, type DataTableSortStatus } from "mantine-datatable";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { PurchaseRequestStatusBadge } from "@/app/components/common/purchase-request-status-badge";
+import tableClasses from "@/app/components/common/purchase-request-table.module.css";
 import { PURCHASE_REQUEST_PAGE_SIZE } from "@/app/constants/pagination";
 import { formatDate, formatYen } from "@/app/lib/format";
 import type { PurchaseRequestListItem } from "@/app/server/data/purchase-requests";
@@ -85,24 +86,12 @@ export function EmployeePurchaseRequestTable({
           }
           records={paginatedRequests}
           recordsPerPage={PURCHASE_REQUEST_PAGE_SIZE}
-          rowStyle={(_record, index) => ({
-            cursor: "pointer",
-            backgroundColor:
-              index % 2 === 1 ? "var(--mantine-color-gray-1)" : undefined,
-          })}
+          rowClassName={() => tableClasses.row}
           sortStatus={sortStatus}
           styles={{
             root: {
               borderRadius: "var(--mantine-radius-md)",
               overflow: "hidden",
-            },
-            table: {
-              "& tbody tr": {
-                transition: "background-color 200ms ease",
-              },
-              "& tbody tr:hover": {
-                backgroundColor: "var(--mantine-color-indigo-0)",
-              },
             },
             pagination: isMultiPage ? undefined : { display: "none" },
           }}
