@@ -46,3 +46,17 @@ export function canViewPurchaseRequest(
 export function canReviewPurchaseRequest(viewer: User): boolean {
   return viewer.role === "admin";
 }
+
+export function canEditPurchaseRequest(
+  viewer: User,
+  ownerUserId: User["id"],
+): boolean {
+  return viewer.role === "employee" && viewer.id === ownerUserId;
+}
+
+export function canWithdrawPurchaseRequest(
+  viewer: User,
+  ownerUserId: User["id"],
+): boolean {
+  return viewer.role === "employee" && viewer.id === ownerUserId;
+}

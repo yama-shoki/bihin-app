@@ -1,12 +1,12 @@
 "use server";
 
+import { db } from "@/db";
+import { users } from "@/db/schema/users";
+import type { User } from "@/db/types";
 import { eq } from "drizzle-orm";
 import type { Route } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { users } from "@/db/schema/users";
-import type { User } from "@/db/types";
 
 const SESSION_COOKIE_NAME = "user_id";
 const ADMIN_REQUESTS_PATH = "/admin/requests" as Route;
@@ -15,7 +15,7 @@ const EMPLOYEE_REQUESTS_PATH = "/requests" as Route;
 export async function loginAs(userId: User["id"]): Promise<void> {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user) {
-    return;
+    redirect("/");
   }
 
   const cookieStore = await cookies();
@@ -26,7 +26,7 @@ export async function loginAs(userId: User["id"]): Promise<void> {
   });
 
   redirect(
-    user.role === "admin" ? ADMIN_REQUESTS_PATH : EMPLOYEE_REQUESTS_PATH,
+    user.role === "admin" ? ADMIN_REQUESTS_PATH : EMPLOYEE_REQUESTS_PATH
   );
 }
 

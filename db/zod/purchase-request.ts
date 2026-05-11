@@ -22,6 +22,17 @@ export const createPurchaseRequestSchema = purchaseRequestInsertSchema.pick({
   desiredPurchaseDate: true,
 });
 
+export const updatePurchaseRequestSchema = purchaseRequestInsertSchema
+  .pick({
+    title: true,
+    amountYen: true,
+    childCategoryId: true,
+    desiredPurchaseDate: true,
+  })
+  .extend({
+    purchaseRequestId: z.string().min(1),
+  });
+
 export const approvePurchaseRequestSchema = z.object({
   purchaseRequestId: z.string().min(1),
 });
@@ -33,4 +44,8 @@ export const rejectPurchaseRequestSchema = z.object({
     .trim()
     .min(1, "却下理由を入力してください")
     .max(500, "却下理由は500文字以内で入力してください"),
+});
+
+export const withdrawPurchaseRequestSchema = z.object({
+  purchaseRequestId: z.string().min(1),
 });
