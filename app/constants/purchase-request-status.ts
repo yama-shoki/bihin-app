@@ -1,6 +1,5 @@
 import type { MantineColor } from "@mantine/core";
-import type { ApprovalHistoryKind } from "@/db/schema/approval-histories";
-import type { PurchaseRequestStatus } from "@/db/schema/purchase-requests";
+import type { PurchaseRequestStatus } from "@/db/types";
 
 export const PURCHASE_REQUEST_STATUS_LABELS: Record<
   PurchaseRequestStatus,
@@ -19,10 +18,3 @@ export const PURCHASE_REQUEST_STATUS_BADGE_COLORS: Record<
   approved: "blue",
   rejected: "red",
 };
-
-export const APPROVAL_HISTORY_KIND_LABELS: Record<ApprovalHistoryKind, string> =
-  {
-    created: "申請",
-    approved: "承認",
-    rejected: "却下",
-  };

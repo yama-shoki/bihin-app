@@ -6,8 +6,11 @@ import {
   purchaseRequests,
   users,
 } from "./schema";
-import type { PurchaseRequestStatus } from "./schema/purchase-requests";
-import type { ApprovalHistoryInsert, PurchaseRequestInsert } from "./types";
+import type {
+  ApprovalHistoryInsert,
+  PurchaseRequestInsert,
+  PurchaseRequestStatus,
+} from "./types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

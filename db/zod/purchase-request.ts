@@ -34,13 +34,3 @@ export const rejectPurchaseRequestSchema = z.object({
     .min(1, "却下理由を入力してください")
     .max(500, "却下理由は500文字以内で入力してください"),
 });
-
-export type CreatePurchaseRequestInput = z.infer<
-  typeof createPurchaseRequestSchema
->;
-export type ApprovePurchaseRequestInput = z.infer<
-  typeof approvePurchaseRequestSchema
->;
-export type RejectPurchaseRequestInput = z.infer<
-  typeof rejectPurchaseRequestSchema
->;

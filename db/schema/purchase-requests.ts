@@ -1,15 +1,8 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { PURCHASE_REQUEST_STATUSES } from "../constants/purchase-request-status";
 import { childCategories } from "./categories";
 import { id, timestamps } from "./helpers";
 import { users } from "./users";
-
-export const PURCHASE_REQUEST_STATUSES = [
-  "pending",
-  "approved",
-  "rejected",
-] as const;
-
-export type PurchaseRequestStatus = (typeof PURCHASE_REQUEST_STATUSES)[number];
 
 export const purchaseRequests = sqliteTable(
   "purchase_requests",

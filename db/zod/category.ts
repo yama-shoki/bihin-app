@@ -1,5 +1,4 @@
 import { createInsertSchema } from "drizzle-zod";
-import type { z } from "zod";
 import { childCategories, parentCategories } from "../schema/categories";
 
 export const parentCategoryInsertSchema = createInsertSchema(parentCategories, {
@@ -22,5 +21,3 @@ export const addChildCategorySchema = childCategoryInsertSchema.pick({
   parentCategoryId: true,
   name: true,
 });
-
-export type AddChildCategoryInput = z.infer<typeof addChildCategorySchema>;

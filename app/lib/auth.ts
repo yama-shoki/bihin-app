@@ -3,9 +3,8 @@ import { cookies } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
 import { cache } from "react";
 import { db } from "@/db";
-import type { UserRole } from "@/db/schema/users";
 import { users } from "@/db/schema/users";
-import type { User } from "@/db/types";
+import type { User, UserRole } from "@/db/types";
 import "server-only";
 
 const SESSION_COOKIE_NAME = "user_id";

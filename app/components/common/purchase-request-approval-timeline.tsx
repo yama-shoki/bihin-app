@@ -1,8 +1,7 @@
 import { type MantineColor, Stack, Text, Timeline } from "@mantine/core";
-import { APPROVAL_HISTORY_KIND_LABELS } from "@/app/constants/purchase-request-status";
+import { APPROVAL_HISTORY_KIND_LABELS } from "@/app/constants/approval-history-kind";
 import { formatDateTime } from "@/app/lib/format";
-import type { PurchaseRequestStatus } from "@/db/schema/purchase-requests";
-import type { ApprovalHistory, User } from "@/db/types";
+import type { ApprovalHistory, PurchaseRequestStatus, User } from "@/db/types";
 
 const KIND_BULLET_COLORS = {
   created: "gray",

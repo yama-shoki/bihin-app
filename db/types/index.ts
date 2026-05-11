@@ -18,6 +18,6 @@ export type PurchaseRequestInsert = typeof purchaseRequests.$inferInsert;
 export type ApprovalHistory = typeof approvalHistories.$inferSelect;
 export type ApprovalHistoryInsert = typeof approvalHistories.$inferInsert;
 
-export type { ApprovalHistoryKind } from "../schema/approval-histories";
-export type { PurchaseRequestStatus } from "../schema/purchase-requests";
-export type { UserRole } from "../schema/users";
+export type { ApprovalHistoryKind } from "../constants/approval-history-kind";
+export type { PurchaseRequestStatus } from "../constants/purchase-request-status";
+export type { UserRole } from "../constants/user-role";

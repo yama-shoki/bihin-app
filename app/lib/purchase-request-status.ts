@@ -1,4 +1,4 @@
-import type { PurchaseRequestStatus } from "@/db/schema/purchase-requests";
+import type { PurchaseRequestStatus } from "@/db/types";
 
 export function canTransitionPurchaseRequestStatus(
   current: PurchaseRequestStatus,

@@ -3,7 +3,7 @@ import {
   PURCHASE_REQUEST_STATUS_BADGE_COLORS,
   PURCHASE_REQUEST_STATUS_LABELS,
 } from "@/app/constants/purchase-request-status";
-import type { PurchaseRequestStatus } from "@/db/schema/purchase-requests";
+import type { PurchaseRequestStatus } from "@/db/types";
 
 type Props = Omit<BadgeProps, "color" | "children"> & {
   status: PurchaseRequestStatus;

@@ -2,7 +2,7 @@ import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { PurchaseRequestStatusBadge } from "@/app/components/common/purchase-request-status-badge";
-import type { PurchaseRequestStatus } from "@/db/schema/purchase-requests";
+import type { PurchaseRequestStatus } from "@/db/types";
 
 function renderWithMantine(ui: React.ReactNode) {
   return render(<MantineProvider>{ui}</MantineProvider>);

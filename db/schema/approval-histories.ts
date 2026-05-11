@@ -1,15 +1,8 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { APPROVAL_HISTORY_KINDS } from "../constants/approval-history-kind";
 import { id } from "./helpers";
 import { purchaseRequests } from "./purchase-requests";
 import { users } from "./users";
-
-export const APPROVAL_HISTORY_KINDS = [
-  "created",
-  "approved",
-  "rejected",
-] as const;
-
-export type ApprovalHistoryKind = (typeof APPROVAL_HISTORY_KINDS)[number];
 
 // * append-only 設計: 共通 timestamps を持たず occurredAt がイベント発生時刻を担う
 export const approvalHistories = sqliteTable(
