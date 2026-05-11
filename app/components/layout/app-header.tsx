@@ -1,7 +1,8 @@
-import { Group, Title } from "@mantine/core";
+import { Box, Group, Title } from "@mantine/core";
 import { getSession } from "@/app/lib/auth";
 import { listSeedUsers } from "@/app/server/data/users";
 import type { User } from "@/db/types";
+import { AppBreadcrumbs } from "./app-breadcrumbs";
 import { UserSwitcher } from "./user-switcher";
 
 type UserSwitcherUser = Pick<User, "id" | "name" | "department" | "role">;
@@ -28,8 +29,13 @@ export async function AppHeader() {
   );
 
   return (
-    <Group h="100%" justify="space-between" style={{ flex: 1 }}>
-      <Title order={3}>備品購入申請</Title>
+    <Group h="100%" justify="space-between" style={{ flex: 1 }} wrap="nowrap">
+      <Group gap="xl" wrap="nowrap">
+        <Title order={3}>備品購入申請</Title>
+        <Box visibleFrom="sm">
+          <AppBreadcrumbs />
+        </Box>
+      </Group>
       <UserSwitcher candidates={candidates} currentUser={currentUser} />
     </Group>
   );

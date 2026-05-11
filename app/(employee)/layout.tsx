@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { AppHeader } from "@/app/components/layout/app-header";
+import { AppShellLayout } from "@/app/components/layout/app-shell-layout";
 import { requireRole } from "@/app/lib/auth";
-import { EmployeeShell } from "./components/employee-shell";
+import { EmployeeSidebar } from "./components/employee-sidebar";
 
 export default async function EmployeeLayout({
   children,
@@ -10,5 +11,9 @@ export default async function EmployeeLayout({
 }>) {
   await requireRole("employee");
 
-  return <EmployeeShell header={<AppHeader />}>{children}</EmployeeShell>;
+  return (
+    <AppShellLayout header={<AppHeader />} sidebar={<EmployeeSidebar />}>
+      {children}
+    </AppShellLayout>
+  );
 }
