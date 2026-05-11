@@ -7,7 +7,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { ROLE_LABELS } from "@/app/constants/role";
+import { ROLE_BADGE_COLORS, ROLE_LABELS } from "@/app/constants/role";
 import { loginAs } from "@/app/server/actions/auth";
 import { listSeedUsers } from "@/app/server/data/users";
 
@@ -37,7 +37,7 @@ export default async function LoginPage() {
                   <Text c="dimmed" size="sm">
                     {user.department}
                   </Text>
-                  <Badge color={user.role === "admin" ? "blue" : "gray"}>
+                  <Badge color={ROLE_BADGE_COLORS[user.role]}>
                     {ROLE_LABELS[user.role]}
                   </Badge>
                 </Stack>

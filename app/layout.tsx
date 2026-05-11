@@ -1,13 +1,12 @@
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
-import {
-  ColorSchemeScript,
-  MantineProvider,
-  mantineHtmlProps,
-} from "@mantine/core";
+import "mantine-datatable/styles.layer.css";
+import { MantineProvider, mantineHtmlProps } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
 import type { Metadata } from "next";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "備品購入申請アプリ",
@@ -17,20 +16,19 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="ja" {...mantineHtmlProps}>
-      <head>
-        <ColorSchemeScript forceColorScheme="light" />
-      </head>
       <body>
-        <MantineProvider forceColorScheme="light">
-          <ModalsProvider>
-            <Notifications />
-            {children}
-          </ModalsProvider>
-        </MantineProvider>
+        <NuqsAdapter>
+          <MantineProvider forceColorScheme="light">
+            <ModalsProvider>
+              <Notifications />
+              {children}
+            </ModalsProvider>
+          </MantineProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );

@@ -28,7 +28,7 @@ export async function AppHeader() {
   );
 
   return (
-    <Group h="100%" justify="space-between" px="md">
+    <Group h="100%" justify="space-between" style={{ flex: 1 }}>
       <Title order={3}>備品購入申請</Title>
       <UserSwitcher candidates={candidates} currentUser={currentUser} />
     </Group>
