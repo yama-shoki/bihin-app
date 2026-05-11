@@ -2,17 +2,14 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { purchaseRequests } from "../schema/purchase-requests";
 
-export const purchaseRequestInsertSchema = createInsertSchema(
-  purchaseRequests,
-  {
-    title: (fieldSchema) =>
-      fieldSchema
-        .min(1, "タイトルを入力してください")
-        .max(100, "タイトルは100文字以内で入力してください"),
-    amountYen: (fieldSchema) =>
-      fieldSchema.int().positive("金額は1円以上で入力してください"),
-  },
-);
+const purchaseRequestInsertSchema = createInsertSchema(purchaseRequests, {
+  title: (fieldSchema) =>
+    fieldSchema
+      .min(1, "タイトルを入力してください")
+      .max(100, "タイトルは100文字以内で入力してください"),
+  amountYen: (fieldSchema) =>
+    fieldSchema.int().positive("金額は1円以上で入力してください"),
+});
 
 // * applicantUserId はセッションから補完、id/status/timestamps は DB 任せ
 export const createPurchaseRequestSchema = purchaseRequestInsertSchema.pick({

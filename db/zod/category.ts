@@ -2,7 +2,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { childCategories, parentCategories } from "../schema/categories";
 
-export const parentCategoryInsertSchema = createInsertSchema(parentCategories, {
+const parentCategoryInsertSchema = createInsertSchema(parentCategories, {
   name: (fieldSchema) =>
     fieldSchema
       .trim()
@@ -10,7 +10,7 @@ export const parentCategoryInsertSchema = createInsertSchema(parentCategories, {
       .max(50, "親カテゴリ名は50文字以内で入力してください"),
 });
 
-export const childCategoryInsertSchema = createInsertSchema(childCategories, {
+const childCategoryInsertSchema = createInsertSchema(childCategories, {
   name: (fieldSchema) =>
     fieldSchema
       .trim()

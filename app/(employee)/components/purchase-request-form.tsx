@@ -1,6 +1,21 @@
 "use client";
 
 import {
+  showErrorNotification,
+  showSuccessNotification,
+} from "@/app/lib/client-notifications";
+import {
+  getJapaneseHolidayName,
+  isJapaneseHoliday,
+} from "@/app/lib/jp-holiday";
+import {
+  createPurchaseRequest,
+  updatePurchaseRequest,
+} from "@/app/server/actions/purchase-requests";
+import type { CategoryGroup } from "@/app/server/data/categories";
+import type { PurchaseRequest } from "@/db/types";
+import type { createPurchaseRequestSchema } from "@/db/zod/purchase-request";
+import {
   Button,
   Card,
   Divider,
@@ -18,30 +33,11 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { z } from "zod";
-import {
-  showErrorNotification,
-  showSuccessNotification,
-} from "@/app/lib/client-notifications";
-import {
-  getJapaneseHolidayName,
-  isJapaneseHoliday,
-} from "@/app/lib/jp-holiday";
-import {
-  createPurchaseRequest,
-  updatePurchaseRequest,
-} from "@/app/server/actions/purchase-requests";
-import type { CategoryGroup } from "@/app/server/data/categories";
-import type { PurchaseRequest } from "@/db/types";
-import type { createPurchaseRequestSchema } from "@/db/zod/purchase-request";
 import { ChildCategoryCombobox } from "./child-category-combobox";
 
-// Server に送る payload 形状は zod schema から派生 = 型ドリフトを構造的に防ぐ。
 type PurchaseRequestPayload = z.infer<typeof createPurchaseRequestSchema>;
 
-// Form は親カテゴリ Select の制御 (parentCategoryId)、NumberInput の空状態 ("")、
-// Mantine 9 DateInput の string 値を扱う必要がある。
-// schema の payload を再利用しつつ UI 都合の差分だけを上書きする。
-export type PurchaseRequestFormValues = Omit<
+type PurchaseRequestFormValues = Omit<
   PurchaseRequestPayload,
   "amountYen" | "desiredPurchaseDate"
 > & {
@@ -88,8 +84,8 @@ export function PurchaseRequestForm(props: Props) {
         value.trim().length === 0
           ? "タイトルを入力してください"
           : value.length > 100
-            ? "タイトルは100文字以内で入力してください"
-            : null,
+          ? "タイトルは100文字以内で入力してください"
+          : null,
       amountYen: (value) =>
         typeof value !== "number" || value <= 0
           ? "金額は1円以上で入力してください"
@@ -127,7 +123,7 @@ export function PurchaseRequestForm(props: Props) {
 
     if (result.ok) {
       showSuccessNotification(
-        isEdit ? "申請を更新しました" : "申請を作成しました",
+        isEdit ? "申請を更新しました" : "申請を作成しました"
       );
       router.push(detailHref);
       router.refresh();
@@ -146,8 +142,8 @@ export function PurchaseRequestForm(props: Props) {
         Object.fromEntries(
           Object.entries(result.error.fieldErrors)
             .map(([field, messages]) => [field, messages[0]])
-            .filter(([, message]) => Boolean(message)),
-        ),
+            .filter(([, message]) => Boolean(message))
+        )
       );
     }
 

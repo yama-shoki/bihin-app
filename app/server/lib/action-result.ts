@@ -7,7 +7,7 @@ export type ActionErrorKind =
   | "CONFLICT"
   | "INTERNAL";
 
-export type ActionError = {
+type ActionError = {
   kind: ActionErrorKind;
   message: string;
   fieldErrors?: Record<string, string[]>;
@@ -16,10 +16,6 @@ export type ActionError = {
 export type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: ActionError };
-
-export function ok<T>(data: T): ActionResult<T> {
-  return { ok: true, data };
-}
 
 export function err(
   kind: ActionErrorKind,
